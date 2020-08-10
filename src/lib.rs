@@ -1,7 +1,7 @@
 #![allow(clippy::into_iter_on_ref)]
 extern crate cpython;
 
-use cpython::{PyDict, PyString, PyList, PyResult, Python};
+use cpython::{PyDict, PyString, PyList, PyResult, PyErr, Python};
 
 use cpython::PythonObject;
 use cpython::ToPyObject;
@@ -11,6 +11,8 @@ use chrono::{DateTime, Utc};
 
 use cpython::*;
 use feed_rs::model::{FeedType, Category, Text, Link, Person, Generator, Image, Entry, Content};
+
+py_exception!(libultrafeedparser, FeedError);
 
 fn parse_text(py: Python, text: Option<Text>) -> PyObject {
     match text {
@@ -212,9 +214,12 @@ fn map_image_to_pyobject(py: Python, image: Option<Image>) -> PyObject {
     }
 }
 
-fn parse(py: Python, feed: PyString) -> PyResult<PyDict> {
+fn parse(py: Python, feed: PyString) -> PyResult<PyObject> {
     let feed = feed.to_string(py)?.to_string();
-    let feed = parser::parse(feed.as_bytes()).unwrap();
+    let feed = match parser::parse(feed.as_bytes()) {
+        Ok(feed) => feed,
+        Err(e) => return Err(PyErr::new::<FeedError, _>(py, e.to_string()))
+    };
 
     let data = PyDict::new(py);
     data.set_item(py, PyUnicode::new(py, "id"), PyUnicode::new(py, feed.id.as_str()))
@@ -252,7 +257,7 @@ fn parse(py: Python, feed: PyString) -> PyResult<PyDict> {
     data.set_item(py, PyUnicode::new(py, "entries"), map_entries_to_list_of_dicts(py, feed.entries))
         .expect("Conversion of feed::entries failed");
 
-    Ok(data)
+    Ok(data.into_object())
 }
 
 
@@ -263,6 +268,7 @@ py_module_initializer!(
     |py, m| {
         m.add(py, "__doc__", "Fast feed parser implemented using feed-rs Rust library")?;
         m.add(py, "parse", py_fn!(py, parse(feed_str: PyString)))?;
+        m.add(py, "FeedError", py.get_type::<FeedError>())?;
         Ok(())
     }
 );
