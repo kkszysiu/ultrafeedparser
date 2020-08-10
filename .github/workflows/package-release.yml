@@ -7,7 +7,6 @@ on:
 jobs:
   release:
     # specify the instance
-    # runs-on: ubuntu-latest
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -40,7 +39,15 @@ jobs:
     - name: Twine check
       run: |
         twine check dist/*
-        
+        - name: Upload binaries to release
+    - uses: svenstaro/upload-release-action@v2
+      name: Publish artifacts
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: dist/*.whl
+        tag: ${{ github.ref }}
+        overwrite: true
+        file_glob: true
     #- name: Publish to PyPI
     #  run: |
     #    twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
