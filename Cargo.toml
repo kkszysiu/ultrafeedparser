@@ -1,0 +1,18 @@
+[package]
+name = "ultrafeedparser"
+version = "0.1.0"
+authors = ["Krzysztof Klinikowski <kkszysiu@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "ultrafeedparser"
+crate-type = ["cdylib"]
+
+[dependencies]
+feed-rs = "0.3.0"
+chrono = "0.4.13"
+
+[dependencies.cpython]
+version = "0.5"
+features = ["extension-module-2-7", "python27-sys"]
+default-features = false
