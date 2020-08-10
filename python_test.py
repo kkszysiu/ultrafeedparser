@@ -4,7 +4,7 @@ import sys
 
 sys.path.append(os.path.abspath("./target/debug/"))
 
-import libultrafeedparser as ultrafeedparser
+import ultrafeedparser
 import pprint
 
 XML_DATA = """
@@ -44,9 +44,9 @@ JSON_DATA = """
 
 
 print('-' * 50)
-print(ultrafeedparser.parse(XML_DATA))
+pprint.pprint(ultrafeedparser.parse(XML_DATA))
 print('-' * 50)
 
 print('-' * 50)
-print(ultrafeedparser.parse(JSON_DATA))
+pprint.pprint(ultrafeedparser.parse(JSON_DATA))
 print('-' * 50)
