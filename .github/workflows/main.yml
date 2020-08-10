@@ -39,10 +39,10 @@ jobs:
           target: i686-pc-windows-msvc
 
       - name: Install setuptools-rust
-        run: pip install setuptools-rust==0.10.3
+        run: pip install setuptools-rust==0.10.3 wheel
 
-      - name: Build package
-        run: pip install -e .
+      #- name: Build package
+      #  run: pip install -e .
 
       - name: Test tomlgen_rust
         shell: bash
