@@ -38,6 +38,10 @@ jobs:
           override: true
           target: i686-pc-windows-msvc
 
+      - if: matrix.python-version == '2.7'
+        name: Install setuptools-rust
+        run: pip install setuptools-rust==0.10.3
+
       - name: Build package
         run: pip install -e .
 
