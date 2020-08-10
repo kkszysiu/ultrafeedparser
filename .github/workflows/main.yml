@@ -46,14 +46,15 @@ jobs:
         name: Install benchmark dependencies for Python 2
         run: cd bench && pip install -r requirements2.txt
 
-      - if: matrix.python-version != '2.7'
+      - if: matrix.python-version != '2.7' && matrix.python-version != '3.9-dev'
         name: Install benchmark dependencies for Python 3
         run: cd bench && pip install -r requirements3.txt
 
       - name: Install ultrafeedparser
         run: python setup.py install
         
-      - name: Run benchmarks
+      - if: matrix.python-version != '3.9-dev'
+        name: Run benchmarks
         shell: bash
         run: |
           cd bench && pytest
