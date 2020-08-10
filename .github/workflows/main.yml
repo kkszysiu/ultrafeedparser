@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [2.7, 3.6, 3.7, 3.8, 3.9-dev, pypy3]
+        python-version: [2.7, 3.6, 3.7, 3.8, 3.9-dev]
     steps:
       - uses: actions/checkout@master
       - name: Setup python
@@ -28,6 +28,7 @@ jobs:
         name: Install build dependencies
         run: sudo apt-get install -y libxml2-dev libxslt-dev
 
+
       # Install 32-bit windows target for pypy3
       - if: matrix.os == 'windows-latest' && matrix.python-version == 'pypy3'
         name: Install 32-bit Rust target
@@ -39,32 +40,27 @@ jobs:
           target: i686-pc-windows-msvc
 
       - name: Install setuptools-rust
-        run: pip install setuptools-rust==0.10.3
+        run: pip install setuptools-rust==0.10.3 wheel pytest pytest-benchmark
 
-      - name: Build package
-        run: pip install -e .
+      - if: matrix.python-version == '2.7'
+        name: Install benchmark dependencies for Python 2
+        run: cd bench && pip install -r requirements2.txt
 
-      - name: Test tomlgen_rust
+      - if: matrix.python-version != '2.7'
+        name: Install benchmark dependencies for Python 3
+        run: cd bench && pip install -r requirements3.txt
+
+      - name: Install ultrafeedparser
+        run: python setup.py install
+        
+      - name: Run benchmarks
         shell: bash
         run: |
-          pip install wheel
-          cd example_tomlgen
-          python setup.py tomlgen_rust -w build
-      # FIXME: Can't test easily on windows 3.9 or pypy because have to build lxml from source!
-      - name: Test html-py-ever
+          cd bench && pytest
+        
+      - name: Run tests
         if: ${{ !(matrix.os == 'windows-latest' && (matrix.python-version == 'pypy3' || matrix.python-version == '3.9-dev')) }}
         shell: bash
         run: |
-          cd html-py-ever
-          pip install -r requirements-dev.txt
-          python setup.py install
-          cd test && pytest
-      - name: Test other examples
-        shell: bash
-        run: |
-          cd examples/
-          # PEP517 build isolation means we don't use the setuptools-rust locally,
-          # instead it installs from PyPI!
-          pip install --no-use-pep517 -e rust_with_cffi/
-          pip install -r rust_with_cffi/requirements-dev.txt
-          pytest rust_with_cffi/tests.py
+          cd tests && pytest
+  
