@@ -28,6 +28,7 @@ jobs:
         name: Install build dependencies
         run: sudo apt-get install -y libxml2-dev libxslt-dev
 
+
       # Install 32-bit windows target for pypy3
       - if: matrix.os == 'windows-latest' && matrix.python-version == 'pypy3'
         name: Install 32-bit Rust target
@@ -39,13 +40,27 @@ jobs:
           target: i686-pc-windows-msvc
 
       - name: Install setuptools-rust
-        run: pip install setuptools-rust==0.10.3 wheel pytest
+        run: pip install setuptools-rust==0.10.3 wheel pytest pytest-benchmark
+
+      - if: matrix.python-version == '2.7'
+        name: Install benchmark dependencies for Python 2
+        run: cd bench && pip install -r requirements2.txt
+
+      - if: matrix.python-version != '2.7'
+        name: Install benchmark dependencies for Python 3
+        run: cd bench && pip install -r requirements3.txt
 
       - name: Install ultrafeedparser
         run: python setup.py install
+        
+      - name: Run benchmarks
+        shell: bash
+        run: |
+          cd bench && pytest
         
       - name: Run tests
         if: ${{ !(matrix.os == 'windows-latest' && (matrix.python-version == 'pypy3' || matrix.python-version == '3.9-dev')) }}
         shell: bash
         run: |
-          cd test && pytest
+          cd tests && pytest
+  
