@@ -14,5 +14,5 @@ chrono = "0.4.13"
 
 [dependencies.cpython]
 version = "0.5"
-features = ["extension-module-2-7", "python27-sys"]
+# features = ["extension-module-2-7", "python27-sys"]
 default-features = false
