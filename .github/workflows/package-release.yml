@@ -35,13 +35,11 @@ jobs:
     - name: Build Python package
       run: |
         python setup.py sdist bdist_wheel
-    
     - name: Twine check
       run: |
         twine check dist/*
-        - name: Upload binaries to release
-    - uses: svenstaro/upload-release-action@v2
-      name: Publish artifacts
+    - name: Publish artifacts
+      uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: dist/*.whl
