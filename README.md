@@ -1,11 +1,23 @@
-# UltraFeedParser
-Minimal but fast feed parser for Python, partially written in Rust.
+<p align="center">UltraFeedParser</p>
+<p align="center">Minimal but fast feed parser for Python, partially written in Rust.</p>
+
+# Intro
+TODO
 
 ## Work in Progress
 
-## Build on macOS
+## Build dev build
 ```bash
-RUSTFLAGS="-C link-arg=-undefined -C link-arg=dynamic_lookup" cargo build
-cp target/debug/liblisticle_renderer.dylib target/debug/liblisticle_renderer.so
-python tests/python_test.py
+pip install setuptools-rust==0.10.3
+python setup.py develop
 ```
+
+## Build release
+## Build dev build
+```bash
+pip install setuptools-rust==0.10.3
+python setup.py install
+```
+
+## Benchmarks
+See bench directory for more info.
