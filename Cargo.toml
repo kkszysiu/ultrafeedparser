@@ -9,7 +9,7 @@ name = "ultrafeedparser"
 crate-type = ["cdylib"]
 
 [dependencies]
-feed-rs = "0.3.0"
+feed-rs = "0.4.0"
 chrono = "0.4.13"
 
 [dependencies.cpython]
