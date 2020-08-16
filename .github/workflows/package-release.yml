@@ -47,5 +47,6 @@ jobs:
         overwrite: true
         file_glob: true
     - name: Publish to PyPI
+      if: ${{ !(matrix.os != 'ubuntu-latest' }}
       run: |
         twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
