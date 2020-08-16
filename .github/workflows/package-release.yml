@@ -27,10 +27,7 @@ jobs:
         override: true
     - name: Install dependencies
       run: |
-        apt-get install -y rename
         python -m pip install --upgrade pip
-        # pip install .
-        # release and testing dependencies
         pip install setuptools-rust==0.10.3 wheel twine
         pip install twine flake8 
     - name: Build Python package
@@ -47,11 +44,11 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         file_glob: true
-    - name: Rename packages
-      run: |
-        cd dist/  
-        rename  's/linux/manylinux2014/' *
-        cd ..
-    - name: Publish to PyPI
-      run: |
-        twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
+    #- name: Rename packages
+    #  run: |
+    #    cd dist/  
+    #    rename  's/linux/manylinux2014/' *
+    #    cd ..
+    #- name: Publish to PyPI
+    #  run: |
+    #    twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
