@@ -27,6 +27,7 @@ jobs:
         override: true
     - name: Install dependencies
       run: |
+        apt-get install -y rename
         python -m pip install --upgrade pip
         # pip install .
         # release and testing dependencies
