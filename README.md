@@ -3,6 +3,7 @@
 
 ### Intro
 Tested with Python 2.7, 3.6, 3.7 and 3.8
+
 It uses `feed-rs` Rust library: https://crates.io/crates/feed-rs to parse feeds.
 
 ### Work in Progress
