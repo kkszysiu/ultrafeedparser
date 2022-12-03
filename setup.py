@@ -20,6 +20,8 @@ install_requires = []
 
 setup(
     name="ultrafeedparser",
+    description="Minimal but fast feed parser for Python, partially written in Rust.",
+    long_description=open('README.md').read(),
     version="0.1.1",
     classifiers=[
         "License :: OSI Approved :: MIT License",
