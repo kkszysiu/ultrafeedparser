@@ -41,7 +41,7 @@ jobs:
           target: i686-pc-windows-msvc
 
       - name: Install setuptools-rust
-        run: pip install setuptools-rust==0.10.3 wheel pytest pytest-benchmark
+        run: pip install setuptools-rust==1.5.2 wheel pytest pytest-benchmark
 
       - name: Install benchmark dependencies
         run: cd bench && pip install -r requirements3.txt
