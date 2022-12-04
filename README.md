@@ -22,4 +22,4 @@ python setup.py install
 ```
 
 ### Benchmarks
-See bench directory for more info.
+See `bench` directory for more info.
