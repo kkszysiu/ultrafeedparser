@@ -1,6 +1,7 @@
 #![allow(clippy::into_iter_on_ref)]
 extern crate cpython;
 
+use std::time::Duration;
 use cpython::{PyDict, PyString, PyList, PyResult, PyErr, Python};
 
 use cpython::PythonObject;
@@ -8,9 +9,11 @@ use cpython::ToPyObject;
 
 use feed_rs::parser;
 use chrono::{DateTime, Utc};
+use mime::Mime;
+use url::Url;
 
 use cpython::*;
-use feed_rs::model::{FeedType, Category, Text, Link, Person, Generator, Image, Entry, Content};
+use feed_rs::model::{FeedType, Category, Text, Link, Person, Generator, Image, Entry, Content, MediaObject, MediaContent, MediaRating, MediaThumbnail, MediaText, MediaCommunity, MediaCredit};
 
 py_exception!(libultrafeedparser, FeedError);
 
@@ -102,7 +105,8 @@ fn parse_entry(py: Python, entry: Entry) -> PyObject {
         .expect("Conversion of entry::source failed");
     entry_dict.set_item(py, PyUnicode::new(py, "rights"), parse_text(py, entry.rights))
         .expect("Conversion of entry::rights failed");
-
+    entry_dict.set_item(py, PyUnicode::new(py, "media"), map_media_to_list_of_dicts(py, entry.media))
+        .expect("Conversion of entry::media failed");
     entry_dict.into_object()
 }
 
@@ -130,6 +134,77 @@ fn u32_option_to_pyobject(py: Python, u32_option: Option<u32>) -> PyObject {
     }
 }
 
+fn u64_option_to_pyobject(py: Python, u64_option: Option<u64>) -> PyObject {
+    match u64_option {
+        None => py.None(),
+        Some(x) => x.to_py_object(py).into_object()
+    }
+}
+
+fn f64_option_to_pyobject(py: Python, f64_option: Option<f64>) -> PyObject {
+    match f64_option {
+        None => py.None(),
+        Some(x) => x.to_py_object(py).into_object()
+    }
+}
+
+fn url_option_to_pyobject(py: Python, url_option: Option<Url>) -> PyObject {
+    match url_option {
+        None => py.None(),
+        Some(x) => x.as_str().to_py_object(py).into_object()
+    }
+}
+
+fn duration_option_to_pyobject(py: Python, duration_option: Option<Duration>) -> PyObject {
+    match duration_option {
+        None => py.None(),
+        Some(x) => x.as_secs().to_py_object(py).into_object()
+    }
+}
+
+fn mime_option_to_pyobject(py: Python, mime_option: Option<Mime>) -> PyObject {
+    match mime_option {
+        None => py.None(),
+        Some(x) => x.essence_str().to_py_object(py).into_object()
+    }
+}
+
+fn rating_option_to_pyobject(py: Python, rating_option: Option<MediaRating>) -> PyObject {
+    match rating_option {
+        None => py.None(),
+        Some(x) => {
+            let dict = PyDict::new(py);
+            dict.set_item(py, PyUnicode::new(py, "urn"), PyUnicode::new(py, x.urn.as_str()))
+                .expect("Conversion of media_rating::urn failed");
+            dict.set_item(py, PyUnicode::new(py, "value"), PyUnicode::new(py, x.value.as_str()))
+                .expect("Conversion of media_rating::value failed");
+            dict.into_object()
+        }
+    }
+}
+
+fn media_community_option_to_pyobject(py: Python, media_community_option: Option<MediaCommunity>) -> PyObject {
+    match media_community_option {
+        None => py.None(),
+        Some(x) => {
+            let dict = PyDict::new(py);
+            dict.set_item(py, PyUnicode::new(py, "stars_avg"), f64_option_to_pyobject(py, x.stars_avg))
+                .expect("Conversion of media_community::stars_avg failed");
+            dict.set_item(py, PyUnicode::new(py, "stars_count"), u64_option_to_pyobject(py, x.stars_count))
+                .expect("Conversion of media_rating::stars_count failed");
+            dict.set_item(py, PyUnicode::new(py, "stars_min"), u64_option_to_pyobject(py, x.stars_min))
+                .expect("Conversion of media_rating::stars_min failed");
+            dict.set_item(py, PyUnicode::new(py, "stars_max"), u64_option_to_pyobject(py, x.stars_max))
+                .expect("Conversion of media_rating::stars_max failed");
+            dict.set_item(py, PyUnicode::new(py, "stats_views"), u64_option_to_pyobject(py, x.stats_views))
+                .expect("Conversion of media_rating::stats_views failed");
+            dict.set_item(py, PyUnicode::new(py, "stats_favorites"), u64_option_to_pyobject(py, x.stats_favorites))
+                .expect("Conversion of media_rating::stats_favorites failed");
+            dict.into_object()
+        }
+    }
+}
+
 fn map_persons_to_list_of_dicts(py: Python, persons: Vec<Person>) -> PyList {
     let persons_dict: Vec<PyObject> = persons.into_iter().map(
         |person| {
@@ -143,6 +218,93 @@ fn map_persons_to_list_of_dicts(py: Python, persons: Vec<Person>) -> PyList {
             person_dict.into_object()
         }).collect();
     PyList::new(py, persons_dict.as_slice())
+}
+
+fn map_media_to_list_of_dicts(py: Python, media_objects: Vec<MediaObject>) -> PyList {
+    let media_dict: Vec<PyObject> = media_objects.into_iter().map(
+        |media| {
+            let media_dict = PyDict::new(py);
+            media_dict.set_item(py, PyUnicode::new(py, "title"), parse_text(py, media.title))
+                .expect("Conversion of media::title failed");
+            media_dict.set_item(py, PyUnicode::new(py, "content"), map_media_content_to_list_of_dicts(py, media.content))
+                .expect("Conversion of media::content failed");
+            media_dict.set_item(py, PyUnicode::new(py, "duration"), duration_option_to_pyobject(py, media.duration))
+                .expect("Conversion of media::duration failed");
+            media_dict.set_item(py, PyUnicode::new(py, "thumbnails"), map_media_thumbnails_to_list_of_dicts(py, media.thumbnails))
+                .expect("Conversion of media::thumbnails failed");
+            media_dict.set_item(py, PyUnicode::new(py, "texts"), map_media_texts_to_list_of_dicts(py, media.texts))
+                .expect("Conversion of media::texts failed");
+            media_dict.set_item(py, PyUnicode::new(py, "description"), parse_text(py, media.description))
+                .expect("Conversion of media::description failed");
+            media_dict.set_item(py, PyUnicode::new(py, "community"), media_community_option_to_pyobject(py, media.community))
+                .expect("Conversion of media::community failed");
+            media_dict.set_item(py, PyUnicode::new(py, "credits"), map_media_credit_to_list_of_dicts(py, media.credits))
+                .expect("Conversion of media::credits failed");
+            media_dict.into_object()
+        }).collect();
+    PyList::new(py, media_dict.as_slice())
+}
+
+fn map_media_content_to_list_of_dicts(py: Python, media_content: Vec<MediaContent>) -> PyList {
+    let media_content_dict: Vec<PyObject> = media_content.into_iter().map(
+        |media_content| {
+            let media_content_dict = PyDict::new(py);
+            media_content_dict.set_item(py, PyUnicode::new(py, "url"), url_option_to_pyobject(py, media_content.url))
+                .expect("Conversion of media_content::url failed");
+            media_content_dict.set_item(py, PyUnicode::new(py, "content_type"), mime_option_to_pyobject(py, media_content.content_type))
+                .expect("Conversion of media_content::content_type failed");
+            media_content_dict.set_item(py, PyUnicode::new(py, "width"), u32_option_to_pyobject(py, media_content.width))
+                .expect("Conversion of media_content::width failed");
+            media_content_dict.set_item(py, PyUnicode::new(py, "height"), u32_option_to_pyobject(py, media_content.height))
+                .expect("Conversion of media_content::height failed");
+            media_content_dict.set_item(py, PyUnicode::new(py, "duration"), duration_option_to_pyobject(py, media_content.duration))
+                .expect("Conversion of media_content::duration failed");
+            media_content_dict.set_item(py, PyUnicode::new(py, "size"), u64_option_to_pyobject(py, media_content.size))
+                .expect("Conversion of media_content::size failed");
+            media_content_dict.set_item(py, PyUnicode::new(py, "rating"), rating_option_to_pyobject(py, media_content.rating))
+                .expect("Conversion of media_content::rating failed");
+            media_content_dict.into_object()
+        }).collect();
+    PyList::new(py, media_content_dict.as_slice())
+}
+
+fn map_media_thumbnails_to_list_of_dicts(py: Python, media_thumbnail: Vec<MediaThumbnail>) -> PyList {
+    let media_thumbnail_dict: Vec<PyObject> = media_thumbnail.into_iter().map(
+        |media_thumbnail| {
+            let media_thumbnail_dict = PyDict::new(py);
+            media_thumbnail_dict.set_item(py, PyUnicode::new(py, "image"), map_image_to_pyobject(py, Some(media_thumbnail.image)))
+                .expect("Conversion of media_thumbnail::image failed");
+            media_thumbnail_dict.set_item(py, PyUnicode::new(py, "time"), duration_option_to_pyobject(py, media_thumbnail.time))
+                .expect("Conversion of media_thumbnail::time failed");
+            media_thumbnail_dict.into_object()
+        }).collect();
+    PyList::new(py, media_thumbnail_dict.as_slice())
+}
+
+fn map_media_texts_to_list_of_dicts(py: Python, media_texts: Vec<MediaText>) -> PyList {
+    let media_texts_dict: Vec<PyObject> = media_texts.into_iter().map(
+        |media_texts| {
+            let media_texts_dict = PyDict::new(py);
+            media_texts_dict.set_item(py, PyUnicode::new(py, "text"), parse_text(py, Some(media_texts.text)))
+                .expect("Conversion of media_texts::text failed");
+            media_texts_dict.set_item(py, PyUnicode::new(py, "start_time"), duration_option_to_pyobject(py, media_texts.start_time))
+                .expect("Conversion of media_texts::start_time failed");
+            media_texts_dict.set_item(py, PyUnicode::new(py, "end_time"), duration_option_to_pyobject(py, media_texts.end_time))
+                .expect("Conversion of media_texts::end_time failed");
+            media_texts_dict.into_object()
+        }).collect();
+    PyList::new(py, media_texts_dict.as_slice())
+}
+
+fn map_media_credit_to_list_of_dicts(py: Python, media_credit: Vec<MediaCredit>) -> PyList {
+    let media_credits_dict: Vec<PyObject> = media_credit.into_iter().map(
+        |media_credit| {
+            let media_credit_dict = PyDict::new(py);
+            media_credit_dict.set_item(py, PyUnicode::new(py, "entity"), string_option_to_pyobject(py, Some(media_credit.entity)))
+                .expect("Conversion of media_credit::entity failed");
+            media_credit_dict.into_object()
+        }).collect();
+    PyList::new(py, media_credits_dict.as_slice())
 }
 
 fn map_links_to_list_of_dicts(py: Python, links: Vec<Link>) -> PyList {
@@ -214,9 +376,9 @@ fn map_image_to_pyobject(py: Python, image: Option<Image>) -> PyObject {
     }
 }
 
-fn parse(py: Python, feed: PyString) -> PyResult<PyObject> {
-    let feed = feed.to_string(py)?.to_string();
-    let feed = match parser::parse(feed.as_bytes()) {
+fn parse(py: Python, feed: PyBytes) -> PyResult<PyObject> {
+    let feed = feed.data(py);
+    let feed = match parser::parse(feed) {
         Ok(feed) => feed,
         Err(e) => return Err(PyErr::new::<FeedError, _>(py, e.to_string()))
     };
@@ -267,7 +429,7 @@ py_module_initializer!(
     PyInit_libultrafeedparser,
     |py, m| {
         m.add(py, "__doc__", "Fast feed parser implemented using feed-rs Rust library")?;
-        m.add(py, "parse", py_fn!(py, parse(feed_str: PyString)))?;
+        m.add(py, "parse", py_fn!(py, parse(feed_bytes: PyBytes)))?;
         m.add(py, "FeedError", py.get_type::<FeedError>())?;
         Ok(())
     }
