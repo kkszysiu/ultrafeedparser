@@ -22,7 +22,7 @@ setup(
     name="ultrafeedparser",
     description="Minimal but fast feed parser for Python, partially written in Rust.",
     long_description=open('README.md').read(),
-    version="0.1.1",
+    version="0.1.2",
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Development Status :: 3 - Alpha",
