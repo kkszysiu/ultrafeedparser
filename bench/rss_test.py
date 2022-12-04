@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-import sys
 import time
 import pytest
 import feedparser
+import speedparser3
 import ultrafeedparser
 
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
 
 RSS_DATA = """
 <rdf:RDF 
@@ -62,6 +59,8 @@ RSS_DATA = """
 
 </rdf:RDF>
 """
+RSS_DATA_BYTES = str.encode(RSS_DATA)
+
 
 @pytest.mark.benchmark(
     group="rss-parse",
@@ -75,7 +74,7 @@ RSS_DATA = """
 def test_ultrafeedparser_parse(benchmark):
     @benchmark
     def parse():
-        print(ultrafeedparser.parse(RSS_DATA))
+        print(ultrafeedparser.parse(RSS_DATA_BYTES))
 
 @pytest.mark.benchmark(
     group="rss-parse",
@@ -91,19 +90,16 @@ def test_feedparser_parse(benchmark):
     def parse():
         print(feedparser.parse(RSS_DATA))
 
-if PY2:
-    import speedparser
-
-    @pytest.mark.benchmark(
-        group="rss-parse",
-        min_time=0.1,
-        max_time=0.5,
-        min_rounds=10,
-        timer=time.time,
-        disable_gc=True,
-        warmup=False
-    )
-    def test_speedparser_parse(benchmark):
-        @benchmark
-        def parse():
-            print(speedparser.parse(RSS_DATA))
+@pytest.mark.benchmark(
+    group="rss-parse",
+    min_time=0.1,
+    max_time=0.5,
+    min_rounds=10,
+    timer=time.time,
+    disable_gc=True,
+    warmup=False
+)
+def test_speedparser_parse(benchmark):
+    @benchmark
+    def parse():
+        print(speedparser3.parse(RSS_DATA_BYTES))

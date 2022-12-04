@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-import sys
 import time
 import pytest
+import atoma
 import feedparser
+import speedparser3
 import ultrafeedparser
-
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
 
 RSS20_DATA = """
 <rss version="2.0">
@@ -31,6 +28,7 @@ RSS20_DATA = """
   </channel>
 </rss>
 """
+RSS20_DATA_BYTES = str.encode(RSS20_DATA)
 
 @pytest.mark.benchmark(
     group="rss20-parse",
@@ -44,7 +42,7 @@ RSS20_DATA = """
 def test_ultrafeedparser_parse(benchmark):
     @benchmark
     def parse():
-        print(ultrafeedparser.parse(RSS20_DATA))
+        print(ultrafeedparser.parse(RSS20_DATA_BYTES))
 
 @pytest.mark.benchmark(
     group="rss20-parse",
@@ -60,38 +58,30 @@ def test_feedparser_parse(benchmark):
     def parse():
         print(feedparser.parse(RSS20_DATA))
 
-if PY2:
-    import speedparser
+@pytest.mark.benchmark(
+    group="rss20-parse",
+    min_time=0.1,
+    max_time=0.5,
+    min_rounds=10,
+    timer=time.time,
+    disable_gc=True,
+    warmup=False
+)
+def test_speedparser_parse(benchmark):
+    @benchmark
+    def parse():
+        print(speedparser3.parse(RSS20_DATA_BYTES))
 
-    @pytest.mark.benchmark(
-        group="rss20-parse",
-        min_time=0.1,
-        max_time=0.5,
-        min_rounds=10,
-        timer=time.time,
-        disable_gc=True,
-        warmup=False
-    )
-    def test_speedparser_parse(benchmark):
-        @benchmark
-        def parse():
-            print(speedparser.parse(RSS20_DATA))
-
-if PY3:
-    import atoma
-
-    RSS20_DATA_BYTES = str.encode(RSS20_DATA)
-
-    @pytest.mark.benchmark(
-        group="rss20-parse",
-        min_time=0.1,
-        max_time=0.5,
-        min_rounds=10,
-        timer=time.time,
-        disable_gc=True,
-        warmup=False
-    )
-    def test_atoma_parse(benchmark):
-        @benchmark
-        def parse():
-            print(atoma.parse_rss_bytes(RSS20_DATA_BYTES))
+@pytest.mark.benchmark(
+    group="rss20-parse",
+    min_time=0.1,
+    max_time=0.5,
+    min_rounds=10,
+    timer=time.time,
+    disable_gc=True,
+    warmup=False
+)
+def test_atoma_parse(benchmark):
+    @benchmark
+    def parse():
+        print(atoma.parse_rss_bytes(RSS20_DATA_BYTES))

@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-import sys
 import time
 import pytest
+import atoma
 import feedparser
 import ultrafeedparser
 
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
 
 JSON_DATA = """
 {
@@ -30,6 +27,8 @@ JSON_DATA = """
   ]
 }
 """
+JSON_DATA_BYTES = str.encode(JSON_DATA)
+
 
 @pytest.mark.benchmark(
     group="json-parse",
@@ -43,23 +42,19 @@ JSON_DATA = """
 def test_ultrafeedparser_parse(benchmark):
     @benchmark
     def parse():
-        print(ultrafeedparser.parse(JSON_DATA))
+        print(ultrafeedparser.parse(JSON_DATA_BYTES))
 
-if PY3:
-    import atoma
 
-    JSON_DATA_BYTES = str.encode(JSON_DATA)
-
-    @pytest.mark.benchmark(
-        group="json-parse",
-        min_time=0.1,
-        max_time=0.5,
-        min_rounds=10,
-        timer=time.time,
-        disable_gc=True,
-        warmup=False
-    )
-    def test_atoma_parse(benchmark):
-        @benchmark
-        def parse():
-            print(atoma.parse_json_feed_bytes(JSON_DATA_BYTES))
+@pytest.mark.benchmark(
+    group="json-parse",
+    min_time=0.1,
+    max_time=0.5,
+    min_rounds=10,
+    timer=time.time,
+    disable_gc=True,
+    warmup=False
+)
+def test_atoma_parse(benchmark):
+    @benchmark
+    def parse():
+        print(atoma.parse_json_feed_bytes(JSON_DATA_BYTES))
